@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>RepoPilot</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">RP</div>
+        <div>
+          <h1>RepoPilot</h1>
+          <p>代码理解与影响分析</p>
+        </div>
+      </div>
+
+      <section class="panel">
+        <h2>服务</h2>
+        <label>
+          API 地址
+          <input id="apiBase" value="http://127.0.0.1:8000" />
+        </label>
+        <button id="healthBtn" class="secondary">检查连接</button>
+        <p id="healthText" class="muted">未连接</p>
+      </section>
+
+      <section class="panel">
+        <h2>仓库</h2>
+        <label>
+          名称
+          <input id="repoName" placeholder="RepoPilot" />
+        </label>
+        <label>
+          本地路径
+          <input id="repoPath" placeholder="C:\Users\...\RepoPilot" />
+        </label>
+        <button id="registerBtn">注册仓库</button>
+      </section>
+
+      <section class="panel">
+        <h2>已注册</h2>
+        <select id="repoSelect"></select>
+        <button id="refreshReposBtn" class="secondary">刷新列表</button>
+      </section>
+    </aside>
+
+    <main class="workspace">
+      <header class="topbar">
+        <div>
+          <h2>分析任务</h2>
+          <p>输入需求，RepoPilot 会检索代码、扩展调用图上下文并生成报告。</p>
+        </div>
+        <button id="createTaskBtn">开始分析</button>
+      </header>
+
+      <section class="query-area">
+        <textarea id="queryInput" placeholder="例如：分析 run_workflow 调用链，定位入口和影响范围"></textarea>
+      </section>
+
+      <section class="status-grid">
+        <div class="metric">
+          <span>任务状态</span>
+          <strong id="taskStatus">idle</strong>
+        </div>
+        <div class="metric">
+          <span>当前阶段</span>
+          <strong id="taskStage">等待任务</strong>
+        </div>
+        <div class="metric">
+          <span>进度</span>
+          <strong id="taskProgress">0%</strong>
+        </div>
+      </section>
+
+      <div class="progress-track">
+        <div id="progressBar" class="progress-bar"></div>
+      </div>
+
+      <section class="report-layout">
+        <nav class="report-nav">
+          <h3>报告章节</h3>
+          <div id="sectionList"></div>
+        </nav>
+        <article id="reportView" class="report">
+          <p class="placeholder">报告会显示在这里。</p>
+        </article>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
