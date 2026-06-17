@@ -1,4 +1,5 @@
 from dataclasses import asdict
+from pathlib import Path
 from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException
@@ -12,6 +13,9 @@ _REPOS: dict[str, Repository] = {}
 
 @router.post("/register")
 def register_repo(payload: RepoRegisterRequest) -> dict:
+    path = Path(payload.path)
+    if not path.exists() or not path.is_dir():
+        raise HTTPException(status_code=400, detail="Repository path must be an existing directory")
     repo = Repository(id=str(uuid4()), name=payload.name, path=payload.path)
     _REPOS[repo.id] = repo
     return asdict(repo)

@@ -15,5 +15,7 @@
 
 ## 分析接口 `/api/analysis`
 - `POST /search`
+  - 请求体：`repo_id`, `keyword`, `top_k`
 - `POST /analyze`
 - `POST /chain-trace`
+  - 请求体：`repo_id`, `symbol`
