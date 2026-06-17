@@ -4,6 +4,8 @@ from backend.tools.file_tools import read_file
 from backend.tools.repo_tools import scan_repo
 from backend.tools.report_tools import build_markdown_report
 
+MAX_FILE_CONTEXT_CHARS = 3000
+
 
 def parse_requirement_node(state: dict) -> dict:
     requirement = state.get("requirement", "")
@@ -26,7 +28,7 @@ def read_files_node(state: dict) -> dict:
     for hit in state.get("retrieval_results", [])[:5]:
         path = hit["path"]
         if path not in contexts:
-            contexts[path] = read_file(path)[:3000]
+            contexts[path] = read_file(path)[:MAX_FILE_CONTEXT_CHARS]
     return {"file_context": contexts}
 
 

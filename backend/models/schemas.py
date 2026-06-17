@@ -28,7 +28,7 @@ class TaskResponse(BaseModel):
 
 
 class SearchRequest(BaseModel):
-    repo_path: str
+    repo_id: str
     keyword: str
     top_k: int = 10
 
@@ -39,5 +39,5 @@ class AnalyzeRequest(BaseModel):
 
 
 class ChainTraceRequest(BaseModel):
-    repo_path: str
+    repo_id: str
     symbol: str
