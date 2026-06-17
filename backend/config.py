@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     openai_model: str = Field(default="gpt-4-turbo")
     embedding_model: str = Field(default="sentence-transformers/multilingual-e5-large")
     vector_store_dir: str = Field(default=".faiss")
+    cors_origins: str = Field(default="http://localhost,http://127.0.0.1")
 
     model_config = SettingsConfigDict(env_file=".env", env_prefix="REPOPILOT_")
 
@@ -18,3 +19,7 @@ class Settings(BaseSettings):
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
     return Settings()
+
+
+def get_cors_origins(settings: Settings) -> list[str]:
+    return [origin.strip() for origin in settings.cors_origins.split(",") if origin.strip()]

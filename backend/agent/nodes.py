@@ -7,7 +7,7 @@ from backend.tools.report_tools import build_markdown_report
 
 def parse_requirement_node(state: dict) -> dict:
     requirement = state.get("requirement", "")
-    keywords = [token for token in requirement.replace("，", " ").replace(",", " " ).split() if len(token) > 1]
+    keywords = [token for token in requirement.replace("，", " ").replace(",", " ").split() if len(token) > 1]
     return {"parsed_requirement": {"raw": requirement, "keywords": keywords}}
 
 

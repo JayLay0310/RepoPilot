@@ -1,7 +1,7 @@
 from dataclasses import asdict
 from uuid import uuid4
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, BackgroundTasks, HTTPException
 from fastapi.responses import PlainTextResponse
 
 from backend.agent.workflow import run_workflow
@@ -13,8 +13,21 @@ router = APIRouter()
 _TASKS: dict[str, AnalysisTask] = {}
 
 
+def _run_task(task_id: str, repo_path: str, query: str) -> None:
+    task = _TASKS[task_id]
+    try:
+        result = run_workflow({"repo_path": repo_path, "requirement": query})
+        task.status = "completed"
+        task.progress = 100
+        task.report = result.get("report_markdown", "")
+    except Exception as exc:  # pragma: no cover
+        task.status = "failed"
+        task.progress = 100
+        task.report = f"Task failed: {exc}"
+
+
 @router.post("/")
-def create_task(payload: TaskCreateRequest) -> dict:
+def create_task(payload: TaskCreateRequest, background_tasks: BackgroundTasks) -> dict:
     repo = _REPOS.get(payload.repo_id)
     if repo is None:
         raise HTTPException(status_code=404, detail="Repository not found")
@@ -22,10 +35,7 @@ def create_task(payload: TaskCreateRequest) -> dict:
     task = AnalysisTask(id=str(uuid4()), repo_id=payload.repo_id, query=payload.query, status="running", progress=10)
     _TASKS[task.id] = task
 
-    result = run_workflow({"repo_path": repo.path, "requirement": payload.query})
-    task.status = "completed"
-    task.progress = 100
-    task.report = result.get("report_markdown", "")
+    background_tasks.add_task(_run_task, task.id, repo.path, payload.query)
     return asdict(task)
 
 

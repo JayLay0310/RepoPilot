@@ -2,14 +2,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.api import analysis, repos, tasks
-from backend.config import get_settings
+from backend.config import get_cors_origins, get_settings
 
 settings = get_settings()
 
 app = FastAPI(title=settings.app_name, version="0.1.0")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=get_cors_origins(settings),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
