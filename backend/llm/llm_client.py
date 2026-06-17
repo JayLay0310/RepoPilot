@@ -1,10 +1,10 @@
-import os
 import json
-from typing import Optional, Dict, Any
+import os
 from functools import lru_cache
+from typing import Any
 
 try:
-    from openai import OpenAI, APIError, RateLimitError
+    from openai import APIError, OpenAI, RateLimitError
 except ImportError:
     OpenAI = None
     APIError = Exception
@@ -14,21 +14,19 @@ from backend.config import get_settings
 
 
 class LLMClient:
-    """封装 OpenAI API 调用的客户端"""
+    """Wrapper around OpenAI chat completions."""
 
-    def __init__(self, api_key: Optional[str] = None, model: str = "gpt-4-turbo"):
+    def __init__(self, api_key: str | None = None, model: str = "gpt-4-turbo") -> None:
         self.model = model
         self.client = None
-        
+
         if OpenAI is None:
-            print("Warning: OpenAI not installed. LLM features disabled.")
             return
-        
+
         api_key = api_key or os.getenv("OPENAI_API_KEY")
         if not api_key:
-            print("Warning: OPENAI_API_KEY not set. LLM features disabled.")
             return
-        
+
         self.client = OpenAI(api_key=api_key)
 
     def call(
@@ -37,14 +35,9 @@ class LLMClient:
         user_message: str,
         temperature: float = 0.7,
         max_tokens: int = 2000,
-    ) -> Dict[str, Any]:
-        """调用 LLM"""
+    ) -> dict[str, Any]:
         if self.client is None:
-            return {
-                "success": False,
-                "error": "OpenAI client not initialized",
-                "content": "",
-            }
+            return {"success": False, "error": "OpenAI client not initialized", "content": ""}
 
         try:
             response = self.client.chat.completions.create(
@@ -59,34 +52,22 @@ class LLMClient:
             return {
                 "success": True,
                 "content": response.choices[0].message.content,
-                "tokens_used": response.usage.total_tokens,
+                "tokens_used": response.usage.total_tokens if response.usage else 0,
             }
         except RateLimitError:
-            return {
-                "success": False,
-                "error": "Rate limit exceeded",
-                "content": "",
-            }
-        except APIError as e:
-            return {
-                "success": False,
-                "error": str(e),
-                "content": "",
-            }
-        except Exception as e:
-            return {
-                "success": False,
-                "error": str(e),
-                "content": "",
-            }
+            return {"success": False, "error": "Rate limit exceeded", "content": ""}
+        except APIError as exc:
+            return {"success": False, "error": str(exc), "content": ""}
+        except Exception as exc:
+            return {"success": False, "error": str(exc), "content": ""}
 
     def call_with_json(
         self,
         system_prompt: str,
         user_message: str,
         temperature: float = 0.3,
-    ) -> Dict[str, Any]:
-        """调用 LLM 并期望返回 JSON"""
+        max_tokens: int = 2500,
+    ) -> dict[str, Any]:
         if self.client is None:
             return {"success": False, "error": "OpenAI client not initialized", "data": {}}
 
@@ -98,31 +79,22 @@ class LLMClient:
                     {"role": "user", "content": user_message},
                 ],
                 temperature=temperature,
+                max_tokens=max_tokens,
                 response_format={"type": "json_object"},
             )
-            content = response.choices[0].message.content
-            data = json.loads(content)
+            content = response.choices[0].message.content or "{}"
             return {
                 "success": True,
-                "data": data,
-                "tokens_used": response.usage.total_tokens,
+                "data": json.loads(content),
+                "tokens_used": response.usage.total_tokens if response.usage else 0,
             }
         except json.JSONDecodeError:
-            return {
-                "success": False,
-                "error": "Invalid JSON response",
-                "data": {},
-            }
-        except Exception as e:
-            return {
-                "success": False,
-                "error": str(e),
-                "data": {},
-            }
+            return {"success": False, "error": "Invalid JSON response", "data": {}}
+        except Exception as exc:
+            return {"success": False, "error": str(exc), "data": {}}
 
 
 @lru_cache(maxsize=1)
 def get_llm_client() -> LLMClient:
-    """获取 LLM 客户端单例"""
     settings = get_settings()
-    return LLMClient(model=settings.openai_model)
+    return LLMClient(api_key=settings.openai_api_key, model=settings.openai_model)

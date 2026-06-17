@@ -16,13 +16,19 @@ _TASKS: dict[str, AnalysisTask] = {}
 def _run_task(task_id: str, repo_path: str, query: str) -> None:
     task = _TASKS[task_id]
     try:
-        result = run_workflow({"repo_path": repo_path, "requirement": query})
+        def update_progress(progress: int, stage: str) -> None:
+            task.progress = progress
+            task.stage = stage
+
+        result = run_workflow({"repo_path": repo_path, "requirement": query}, progress_callback=update_progress)
         task.status = "completed"
         task.progress = 100
+        task.stage = "completed"
         task.report = result.get("report_markdown", "")
     except Exception as exc:  # pragma: no cover
         task.status = "failed"
         task.progress = 100
+        task.stage = "failed"
         task.report = f"Task failed: {exc}"
 
 
@@ -32,7 +38,14 @@ def create_task(payload: TaskCreateRequest, background_tasks: BackgroundTasks) -
     if repo is None:
         raise HTTPException(status_code=404, detail="Repository not found")
 
-    task = AnalysisTask(id=str(uuid4()), repo_id=payload.repo_id, query=payload.query, status="running", progress=10)
+    task = AnalysisTask(
+        id=str(uuid4()),
+        repo_id=payload.repo_id,
+        query=payload.query,
+        status="running",
+        progress=10,
+        stage="queued",
+    )
     _TASKS[task.id] = task
 
     background_tasks.add_task(_run_task, task.id, repo.path, payload.query)
@@ -52,7 +65,7 @@ def get_task_progress(task_id: str) -> dict:
     task = _TASKS.get(task_id)
     if task is None:
         raise HTTPException(status_code=404, detail="Task not found")
-    return {"task_id": task.id, "status": task.status, "progress": task.progress}
+    return {"task_id": task.id, "status": task.status, "progress": task.progress, "stage": task.stage}
 
 
 @router.get("/{task_id}/report")

@@ -17,4 +17,5 @@ class AnalysisTask:
     query: str
     status: str = "pending"
     progress: int = 0
+    stage: str = "pending"
     report: str = ""

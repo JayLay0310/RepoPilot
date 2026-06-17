@@ -25,6 +25,7 @@ class TaskResponse(BaseModel):
     query: str
     status: str
     progress: int
+    stage: str = "pending"
 
 
 class SearchRequest(BaseModel):
@@ -41,3 +42,7 @@ class AnalyzeRequest(BaseModel):
 class ChainTraceRequest(BaseModel):
     repo_id: str
     symbol: str
+
+
+class CallGraphRequest(BaseModel):
+    repo_id: str

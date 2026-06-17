@@ -1,10 +1,12 @@
 from collections import Counter
 from pathlib import Path
 
+SKIP_DIRS = {".git", ".idea", ".venv", "__pycache__", "node_modules", ".faiss", ".cache", "dist", "build"}
+
 
 def list_files(repo_path: str) -> list[str]:
     repo = Path(repo_path)
-    return [str(p) for p in repo.rglob("*") if p.is_file()]
+    return [str(p) for p in repo.rglob("*") if p.is_file() and not _should_skip(p, repo)]
 
 
 def file_type_stats(repo_path: str) -> dict[str, int]:
@@ -32,3 +34,11 @@ def scan_repo(repo_path: str) -> dict:
         "file_types": file_type_stats(repo_path),
         "frameworks": detect_frameworks(repo_path),
     }
+
+
+def _should_skip(path: Path, repo: Path) -> bool:
+    try:
+        rel_parts = path.relative_to(repo).parts
+    except ValueError:
+        return True
+    return any(part in SKIP_DIRS for part in rel_parts)
